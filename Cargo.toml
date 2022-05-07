@@ -1,0 +1,67 @@
+[package]
+name = "actix-web"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+
+actix-web = "4"
+
+# rbson (required)
+serde = { version = "1", features = ["derive"] }
+rbson = "2.0"
+
+# logging lib(required)
+log = "0.4"
+fast_log="1.5"
+
+#rbatis =  { version = "3.0" }
+rbatis = { version = "3", default-features = false, features = ["mysql","runtime-tokio-rustls"] } #,"debug_mode"
+
+serde_json = "1"
+#A macro for declaring lazily evaluated statics.
+lazy_static = "1.4.0"
+
+#redis
+mobc-redis = "0.7"
+mobc = "0.7"
+
+dotenv = "0.15"
+
+mimalloc = { version = "*", default-features = false }
+
+reqwest = { version = "0.11", features = ["json"] }
+
+cbc = "0.1.2"
+aes = "0.8"
+base64 = "0.13"
+md5 = "0.7"
+
+
+
+[profile.dev]
+# 针对 MacOS 平台对 Debug 模式构建时间做了优化
+split-debuginfo = "unpacked"
+opt-level = 0
+debug = true
+debug-assertions = true
+overflow-checks = true
+lto = false
+panic = 'unwind'
+incremental = true
+codegen-units = 256
+rpath = false
+
+# release
+[profile.release]
+codegen-units = 1
+panic = "abort"
+opt-level = 3
+lto = "thin"
+debug = false
+incremental = false
+overflow-checks = false
+strip = true

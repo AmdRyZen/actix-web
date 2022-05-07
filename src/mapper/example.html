@@ -1,0 +1,35 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "https://github.com/rbatis/rbatis_sql/raw/main/mybatis-3-mapper.dtd">
+<mapper>
+    <sql id="base_where">
+        <if test="name != ''">
+            and a.name != #{name}
+        </if>
+        <if test="dt.bracket() != ''">
+            and a.created_at <= #{dt.bracket()}
+        </if>
+    </sql>
+
+    <insert id="insert_media">
+        insert into
+        t_media_screenshot
+        (name,pull_url,server_name,status,created_at)
+        values
+        (#{model.name},#{model.pull_url},#{model.server_name},#{model.status},#{model.created_at.bracket()})
+    </insert>
+
+    <select id="select_by_condition">
+        select a.*,f.phone from t_media_screenshot a left join f_user f on a.name = f.username
+        <where>
+            <include refid = "base_where" />
+        </where>
+    </select>
+
+    <update id="update_by_id">
+        update t_media_screenshot set name = #{model.name}
+        <where>
+            <if test="model.id != 0">
+                id = #{model.id}
+            </if>
+        </where>
+    </update>
+</mapper>
