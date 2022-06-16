@@ -17,7 +17,7 @@ use std::env;
 */
 pub struct Mltt {
     pub rb: Rbatis,
-    pub redis: mobc::Pool<RedisConnectionManager>,
+    pub redis: Pool<RedisConnectionManager>,
 }
 
 // init global pool
@@ -25,7 +25,7 @@ lazy_static! {
     pub static ref MLTT: Mltt = Mltt {
         rb: Rbatis::new(),
         redis: Pool::builder()
-            .max_open(100)
+            .max_open(15)
             .build(RedisConnectionManager::new(
                 redis::Client::open(env::var("REDIS_URL").unwrap()).unwrap()
             ))

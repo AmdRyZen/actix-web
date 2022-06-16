@@ -68,7 +68,7 @@ async fn main() -> std::io::Result<()> {
     })
     .bind("127.0.0.1:9090")?
     .workers(12)
-    .keep_alive(Duration::from_secs(5))
+    .keep_alive(Duration::from_secs(60))
     .run()
     .await
 }
