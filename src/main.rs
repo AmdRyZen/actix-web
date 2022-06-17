@@ -10,10 +10,9 @@ use std::env;
 use std::time::Duration;
 
 use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
-use mimalloc::MiMalloc;
 
 #[global_allocator]
-static GLOBAL: MiMalloc = MiMalloc;
+static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -25,7 +24,7 @@ async fn echo(req_body: String) -> impl Responder {
     HttpResponse::Ok().body(req_body)
 }
 
-#[actix_web::main]
+#[tokio::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
     // RUSTFLAGS="-C target-cpu=native" cargo build --release

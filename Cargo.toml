@@ -25,13 +25,13 @@ serde_json = "1"
 #A macro for declaring lazily evaluated statics.
 lazy_static = "1.4.0"
 
-#redis
-mobc-redis = "0.7"
-mobc = "0.7"
+# Only needed for the r2d2 feature
+r2d2_redis = "*"
 
 dotenv = "0.15"
 
-mimalloc = { version = "*", default-features = false }
+#mimalloc = { version = "*", default-features = false }
+jemallocator = "0.5.0"
 
 reqwest = { version = "0.11", features = ["json"] }
 
@@ -39,8 +39,6 @@ cbc = "0.1.2"
 aes = "0.8"
 base64 = "0.13"
 md5 = "0.7"
-
-
 
 [profile.dev]
 # 针对 MacOS 平台对 Debug 模式构建时间做了优化

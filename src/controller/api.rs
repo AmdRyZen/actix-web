@@ -1,8 +1,6 @@
-use actix_web::{get, HttpResponse, Responder};
-
 use crate::MLTT;
-use mobc_redis::redis;
-use mobc_redis::redis::aio::Connection;
+use actix_web::{get, HttpResponse, Responder};
+use r2d2_redis::redis::Commands;
 use rbatis::core::db::DBExecResult;
 use rbatis::crud::{CRUDMut, CRUD};
 use rbatis::crud_table;
@@ -35,18 +33,6 @@ pub struct TMediaScreenshotVo {
     pub status: Option<u64>,
     pub created_at: Option<rbatis::DateTimeNative>,
 }
-/*impl Default for TMediaScreenshot {
-    fn default() -> Self {
-        TMediaScreenshot {
-            id: None,
-            name: None,
-            pull_url: None,
-            server_name: None,
-            status: None,
-            created_at: None,
-        }
-    }
-}*/
 
 #[get("/api/htmlSql")]
 async fn get_html_sql() -> impl Responder {
@@ -122,23 +108,16 @@ async fn select_by_condition(
 
 #[get("/api/getValue")]
 async fn get_value() -> impl Responder {
-    let mut conn = MLTT.redis.get().await.unwrap();
-    let s: String = redis::cmd("GET")
-        .arg("aa")
-        .query_async(&mut conn as &mut Connection)
-        .await
-        .unwrap_or("".to_string());
-    //not_std::Cout << format!("MLTT.redis.aa.value = {}", s) << not_std::Endl;
+    let mut conn = MLTT.rd.clone().get().unwrap();
+    let name = conn.get("aa").unwrap_or("".to_string());
     HttpResponse::Ok()
         .content_type("application/json;charset=UTF-8")
-        .body(s)
+        .body(name)
 }
 
 #[get("/api/pySql")]
 async fn get_py_sql() -> impl Responder {
     let data = join_select(&MLTT.rb, "test_updated").await.unwrap();
-    //println!("{:?}", data);
-    //println!("{}", format!("MLTT.redis.value = {}",s));
     HttpResponse::Ok()
         .content_type("application/json;charset=UTF-8")
         .body(serde_json::json!(data).to_string())
@@ -158,17 +137,6 @@ async fn join_select(rbatis: &Rbatis, name: &str) -> Option<Vec<TMediaScreenshot
 async fn list() -> impl Responder {
     //let _v = MLTT.rb.fetch_list::<TMediaScreenshot>().await.unwrap();
     forget_commit().await;
-
-    let mut conn = MLTT.redis.get().await.unwrap();
-    // let s: String = redis::cmd("SET").arg("a").arg(1).query_async(&mut conn as &mut Connection).await.unwrap();
-    let s: String = redis::cmd("GET")
-        .arg("aa")
-        .query_async(&mut conn as &mut Connection)
-        .await
-        .unwrap_or("".to_string());
-
-    println!("{}", format!("MLTT.redis.value = {}", s));
-
     let req = PageRequest::new(1, 20); //分页请求，页码，条数
     let wraper = MLTT.rb.new_wrapper().eq("status", 1);
     let data: Page<TMediaScreenshot> = MLTT.rb.fetch_page_by_wrapper(wraper, &req).await.unwrap();
@@ -193,9 +161,6 @@ pub async fn forget_commit() -> rbatis::core::Result<()> {
                 println!("don't need rollback!");
             }
         });
-    /* let sql = format!("update t_media_screenshot set name = {} where id = {}", "'xxx-zzz'", 2);
-    println!("{}", sql.as_str());
-    let _v = tx.exec_sql(sql.as_str()).await;*/
     let rows_affected = tx
         .update_by_column::<TMediaScreenshot>(
             "id",

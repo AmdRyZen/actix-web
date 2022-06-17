@@ -3,8 +3,8 @@ use fast_log::consts::LogSize;
 use fast_log::plugin::file_split::RollingType;
 use fast_log::plugin::packer::LogPacker;
 use lazy_static::lazy_static;
-use mobc::Pool;
-use mobc_redis::{redis, RedisConnectionManager};
+use r2d2_redis::r2d2::Pool;
+use r2d2_redis::RedisConnectionManager;
 use rbatis::rbatis::Rbatis;
 use std::env;
 
@@ -17,24 +17,23 @@ use std::env;
 */
 pub struct Mltt {
     pub rb: Rbatis,
-    pub redis: Pool<RedisConnectionManager>,
+    //pub redis: Pool<RedisConnectionManager>,
+    pub rd: Pool<RedisConnectionManager>,
 }
 
 // init global pool
 lazy_static! {
     pub static ref MLTT: Mltt = Mltt {
         rb: Rbatis::new(),
-        redis: Pool::builder()
-            .max_open(15)
-            .build(RedisConnectionManager::new(
-                redis::Client::open(env::var("REDIS_URL").unwrap()).unwrap()
-            ))
+        rd: Pool::builder()
+            .max_size(100)
+            .build(RedisConnectionManager::new(env::var("REDIS_URL").unwrap()).unwrap())
+            .unwrap()
     };
 }
 
 impl Mltt {
     pub async fn initialization() {
-        //log
         //fast_log::init_log("requests.log", log::Level::Info, None, true);
         fast_log::init(Config::new().console().file_split(
             "logs/",
