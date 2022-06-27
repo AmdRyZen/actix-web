@@ -10,9 +10,10 @@ use std::env;
 use std::time::Duration;
 
 use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
+use mimalloc::MiMalloc;
 
 #[global_allocator]
-static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
+static GLOBAL: MiMalloc = MiMalloc;
 
 #[get("/")]
 async fn hello() -> impl Responder {

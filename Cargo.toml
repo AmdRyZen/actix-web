@@ -30,8 +30,8 @@ r2d2_redis = "*"
 
 dotenv = "0.15"
 
-#mimalloc = { version = "*", default-features = false }
-jemallocator = "0.5.0"
+mimalloc = { version = "*", default-features = false }
+#jemallocator = "0.5.0"
 
 reqwest = { version = "0.11", features = ["json"] }
 feignhttp = { version = "0.4", features = ["json"] }
