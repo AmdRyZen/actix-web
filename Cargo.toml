@@ -34,6 +34,7 @@ dotenv = "0.15"
 jemallocator = "0.5.0"
 
 reqwest = { version = "0.11", features = ["json"] }
+feignhttp = { version = "0.4", features = ["json"] }
 
 cbc = "0.1.2"
 aes = "0.8"

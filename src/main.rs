@@ -66,7 +66,7 @@ async fn main() -> std::io::Result<()> {
             .service(curl_post)
     })
     .bind("127.0.0.1:9090")?
-    .workers(12)
+    .workers(16)
     .keep_alive(Duration::from_secs(60))
     .run()
     .await
