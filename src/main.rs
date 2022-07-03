@@ -7,10 +7,14 @@ use crate::application::{not_std, MLTT};
 use crate::controller::*;
 use dotenv::dotenv;
 use std::env;
+use std::sync::Arc;
 use std::time::Duration;
 
 use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
 use mimalloc::MiMalloc;
+use nacos_rust_client::client::config_client::{ConfigDefaultListener, ConfigKey};
+use nacos_rust_client::client::naming_client::{Instance, NamingClient, QueryInstanceListParams};
+use nacos_rust_client::client::{ConfigClient, HostInfo};
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -42,6 +46,42 @@ async fn main() -> std::io::Result<()> {
     not_std::Cout << "env = " << env << not_std::Endl;
     not_std::Cout << "HttpServer" << " run " << "success!" << not_std::Endl;
 
+    // nacos
+    let host = HostInfo::parse("127.0.0.1:8848");
+
+    // 配置中心
+    let mut config_client = ConfigClient::new(host.clone(), String::new());
+    let key = ConfigKey::new("actix_web-dev", "dev", "");
+    let c = Box::new(ConfigDefaultListener::new(
+        key.clone(),
+        Arc::new(|s| {
+            //字符串反序列化为对象，如:serde_json::from_str::<T>(s)
+            Some(s.to_owned())
+        }),
+    ));
+    config_client.set_config(&key, "1234").await.unwrap();
+    //监听
+    config_client.subscribe(c.clone()).await;
+    //从监听对象中获取
+    println!("actix_web value: {:?}", c.get_value());
+
+    // 服务中心
+    let client = NamingClient::new(host.clone(), "".to_owned());
+    let ip = local_ipaddress::get().unwrap();
+    for i in 0..10 {
+        let port = 10000 + i;
+        let instance = Instance::new(&ip, port, "actix_web", "", "", "", None);
+        //注册
+        client.register(instance);
+    }
+    let client2 = client.clone();
+    tokio::spawn(async move {
+        query_params(client2.clone()).await;
+    });
+    tokio::signal::ctrl_c()
+        .await
+        .expect("failed to listen for event");
+
     // Multiply x by 6 using shifts and adds
     /* let mut x: u64 = 4;
     unsafe {
@@ -71,4 +111,21 @@ async fn main() -> std::io::Result<()> {
     .keep_alive(Duration::from_secs(60))
     .run()
     .await
+}
+
+async fn query_params(client: Arc<NamingClient>) -> anyhow::Result<()> {
+    let params = QueryInstanceListParams::new("", "", "actix_web", None, true);
+    // 模拟每秒钟获取一次实例
+    loop {
+        //查询并按权重随机选择其中一个实例
+        match client.select_instance(params.clone()).await {
+            Ok(instances) => {
+                println!("select instance {}:{}", &instances.ip, &instances.port);
+            }
+            Err(e) => {
+                println!("select_instance error {:?}", &e)
+            }
+        }
+        tokio::time::sleep(Duration::from_millis(10000)).await;
+    }
 }
