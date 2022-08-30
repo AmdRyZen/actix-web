@@ -50,7 +50,7 @@ async fn main() -> std::io::Result<()> {
     let host = HostInfo::parse("127.0.0.1:8848");
 
     // 配置中心
-    let mut config_client = ConfigClient::new(host.clone(), String::new());
+    let config_client = ConfigClient::new(host.clone(), String::new());
     let key = ConfigKey::new("actix_web-dev", "dev", "");
     let c = Box::new(ConfigDefaultListener::new(
         key.clone(),
@@ -60,6 +60,11 @@ async fn main() -> std::io::Result<()> {
         }),
     ));
     config_client.set_config(&key, "1234").await.unwrap();
+    let value = config_client
+        .get_config(&key)
+        .await
+        .unwrap_or("".to_string());
+    println!("value: {:?}", value.as_str());
     //监听
     config_client.subscribe(c.clone()).await;
     //从监听对象中获取
@@ -68,7 +73,7 @@ async fn main() -> std::io::Result<()> {
     // 服务中心
     let client = NamingClient::new(host.clone(), "".to_owned());
     let ip = local_ipaddress::get().unwrap();
-    for i in 0..10 {
+    for i in 0..2 {
         let port = 10000 + i;
         let instance = Instance::new(&ip, port, "actix_web", "", "", "", None);
         //注册
